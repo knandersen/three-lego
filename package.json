@@ -4,9 +4,9 @@
   "main": "index.js",
   "author": "Kevin Nørby Andersen",
   "license": "MIT",
-  "source":"src/index.html",
+  "source": "src/index.html",
   "dependencies": {
-    "three": "^0.127.0"
+    "three": "latest"
   },
   "scripts": {
     "start": "parcel",
