@@ -7,6 +7,7 @@ import * as CANNON from 'cannon-es';
 import CannonDebugger from 'cannon-es-debugger';
 import Model from './Model';
 import Container from './Container';
+import * as dat from 'dat.gui'
 
 const marioUrl = new URL("../assets/mario.mpd", import.meta.url)
 const hubUrl = new URL("../assets/hub3.mpd", import.meta.url)
@@ -15,6 +16,25 @@ const motorUrl = new URL("../assets/54696p01c01.mpd", import.meta.url)
 
 const ldrawLoader = new LDrawLoader();
 ldrawLoader.smoothNormals = true;
+
+const gui = new dat.GUI()
+let globalOptions = {
+	stepLength:0.003
+}
+gui.add(globalOptions,"stepLength",0.0001,1/30,0.0001)
+
+const obj = {
+	add:function(){
+		for(model of models) {
+			const impulse = new CANNON.Vec3(
+				-Math.random() * 100, 
+				Math.random() * 100, 
+				-Math.random() * 100)
+			model.modelBody.applyImpulse(impulse)
+		}
+	}
+}
+gui.add(obj,"add").name("apply force")
 
 // set up a renderer
 const renderer = new THREE.WebGLRenderer({
@@ -42,10 +62,6 @@ scene.environment = pmremGenerator.fromScene(new RoomEnvironment()).texture;
 
 // lets create a camera
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000)
-camera.position.z = -200
-camera.position.y = 100
-camera.position.x = 50
-camera.lookAt(scene.position)
 
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.update()
@@ -58,10 +74,10 @@ const world = new CANNON.World({
 const cannonDebugger = new CannonDebugger(scene,world)
 
 // Create a slippery material (friction coefficient = 0.0)
-physicsMaterial = new CANNON.Material("slipperyMaterial");
+
+const physicsMaterial = new CANNON.Material("slipperyMaterial");
 var physicsContactMaterial = new CANNON.ContactMaterial(physicsMaterial,
-														physicsMaterial,
-											);
+														physicsMaterial);
 // We must add the contact materials to the world
 world.addContactMaterial(physicsContactMaterial);
 
@@ -93,7 +109,7 @@ const size = bbox.getSize( new THREE.Vector3() );
 const radius = Math.max( size.x, Math.max( size.y, size.z ) ) * 0.5;
 
 controls.target0.copy( bbox.getCenter( new THREE.Vector3() ) );
-controls.position0.set( - 2.3, 1, 2 ).multiplyScalar( radius ).add( controls.target0 );
+controls.position0.set( - 1, 0.2, 2 ).multiplyScalar( radius ).add( controls.target0 );
 controls.reset();
 
 // load models
@@ -102,30 +118,24 @@ let models = []
 const modelOptions = {
 	world: world,
 	scene: scene,
-	loader: ldrawLoader
+	loader: ldrawLoader,
+	modelsArray: models
 }
 
-const mario = new Model(marioUrl.href,modelOptions)
-models.push(mario)
-
-const hub = new Model(hubUrl.href,modelOptions)
-models.push(hub)
-
-const motor = new Model(motorUrl.href,modelOptions)
-models.push(motor)
-
-const car = new Model(carUrl.href,modelOptions)
-models.push(car)
+const mario = new Model(marioUrl.href, modelOptions, new THREE.Vector3(-250,250,-200))
+const hub = new Model(hubUrl.href,modelOptions, new THREE.Vector3(200,200,200))
+const motor = new Model(motorUrl.href,modelOptions, new THREE.Vector3(200,200,-100))
+const car = new Model(carUrl.href,modelOptions,new THREE.Vector3(-100,200,200))
 
 // lets add in an animation loop
-const stepLength = 0.1
+
 const animate = function () {
 	renderer.render(scene, camera)
 	requestAnimationFrame(animate)
 	
 	stats.update()
 	//cannonDebugger.update()
-	world.step(stepLength)
+	world.step(globalOptions.stepLength)
    	for(model of models) {
 		model.update()
 	}

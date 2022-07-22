@@ -8,6 +8,7 @@ class Model {
 		this.world = options.world
 		this.scene = options.scene
         this.loader = options.loader
+        this.modelsArray = options.modelsArray
 		this.model = null
 		this.modelBody = null
 		this.loaded = false
@@ -38,6 +39,7 @@ class Model {
 			this.model.quaternion.copy(this.modelBody.quaternion)
 			
 			this.scene.add(this.model);
+            this.modelsArray.push(this)
 		}, (xhr) => {
 			console.log(xhr.loaded);
 		})
