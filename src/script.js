@@ -113,13 +113,21 @@ controls.position0.set( - 1, 0.2, 2 ).multiplyScalar( radius ).add( controls.tar
 controls.reset();
 
 // load models
+let animateEnabled = false
 let models = []
+const onModelLoaded = () => {
+	if(animateEnabled === false) {
+		animateEnabled = true
+		animate()
+	}
+}
 
 const modelOptions = {
 	world: world,
 	scene: scene,
 	loader: ldrawLoader,
-	modelsArray: models
+	modelsArray: models,
+	callback: onModelLoaded
 }
 
 const mario = new Model(marioUrl.href, modelOptions, new THREE.Vector3(-250,250,-200))
@@ -137,15 +145,13 @@ const animate = function () {
 	//cannonDebugger.update()
 	world.step(globalOptions.stepLength)
 
-	if(models.length > 0) {
-   		for(model of models) {
-			model.update()
-		}
+	for(model of models) {
+		model.update()
 	}
+	
 }
 
-// start the animation
-animate()
+// start the animation when array has loaded
 
 document.addEventListener("mousedown", function (event) {
 	//createShape(event.pageX, event.pageY)

@@ -8,6 +8,7 @@ class Model {
 		this.world = options.world
 		this.scene = options.scene
         this.loader = options.loader
+        this.callback = options.callback
         this.modelsArray = options.modelsArray
 		this.model = null
 		this.modelBody = null
@@ -19,6 +20,7 @@ class Model {
 	load(p) {
 		this.loader.load(this.url, (grp) => {
 			this.loaded = true
+            this.callback()
 			LDrawUtils.mergeObject(grp)
 			this.model = grp
 			this.modelBody = new Body({mass: 2})
