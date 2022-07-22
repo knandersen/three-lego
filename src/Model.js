@@ -3,7 +3,7 @@ import { Box3, Vector3 } from 'three'
 import { Body, Box } from 'cannon-es'
 
 class Model {
-	constructor(url, options) {
+	constructor(url, options, position) {
 		this.url = url
 		this.world = options.world
 		this.scene = options.scene
@@ -12,10 +12,10 @@ class Model {
 		this.modelBody = null
 		this.loaded = false
 
-		this.load()
+		this.load(position)
 	}
 
-	load() {
+	load(p) {
 		this.loader.load(this.url, (grp) => {
 			this.loaded = true
 			LDrawUtils.mergeObject(grp)
@@ -31,8 +31,9 @@ class Model {
 			}
 			this.world.addBody(this.modelBody)
 		
-			// position model from modelBody and update 
-			this.modelBody.quaternion.setFromAxisAngle(new Vector3(1,-0.5,0),Math.PI)
+			// position model from modelBody and update
+            this.modelBody.position.set(p.x,p.y,p.z) 
+			this.modelBody.quaternion.setFromAxisAngle(new Vector3(-1,0,0),Math.PI)
 			this.model.position.copy(this.modelBody.position)
 			this.model.quaternion.copy(this.modelBody.quaternion)
 			
