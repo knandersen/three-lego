@@ -1,19 +1,19 @@
 {
-  "name": "three-base",
+  "name": "three-lego-test",
   "version": "1.0.0",
-  "main": "index.js",
   "author": "Kevin Nørby Andersen",
   "license": "MIT",
   "source": "src/index.html",
   "dependencies": {
     "cannon-es": "^0.19.0",
     "cannon-es-debugger": "^1.0.0",
+    "dat.gui": "^0.7.9",
     "three": "latest"
   },
   "scripts": {
     "start": "parcel",
-    "clean": "rm -rf ./dist ./parcel-cache",
-    "build": "parcel build --public-url ./ && cp ./CNAME ./dist/CNAME",
+    "clean": "rm -rf ./dist ./.parcel-cache",
+    "build": "parcel build --public-url ./",
     "push-gh-pages": "push-dir --dir=dist --branch=gh-pages --cleanup --verbose",
     "deploy": "yarn clean && yarn build && yarn push-gh-pages"
   },
