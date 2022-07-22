@@ -1,11 +1,10 @@
 import * as THREE from 'three';
 import {LDrawLoader} from 'three/examples/jsm/loaders/LDrawLoader'
 import {LDrawUtils} from 'three/examples/jsm/utils/LDrawUtils'
-
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment'
 
-const marioUrl = new URL("../static/mario.mpd", import.meta.url)
+const marioUrl = new URL("../assets/mario.mpd", import.meta.url)
 
 const ldrawLoader = new LDrawLoader();
 ldrawLoader.smoothNormals = true;
@@ -17,7 +16,9 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(window.devicePixelRatio)
 // THREE colors look like 0xff00ff, same as #ff00ff
-renderer.setClearColor(0xefefef, 1)
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
 
 // find the element to add the renderer to!
 const section = document.querySelector("section")
@@ -27,6 +28,7 @@ section.appendChild(renderer.domElement)
 const scene = new THREE.Scene()
 
 const pmremGenerator = new THREE.PMREMGenerator(renderer)
+scene.background = new THREE.Color( 0xdeebed );
 scene.environment = pmremGenerator.fromScene(new RoomEnvironment()).texture;
 
 // lets create a camera
@@ -44,12 +46,31 @@ const light = new THREE.DirectionalLight(0xffffff, 1)
 light.position.set(0, 0, -1)
 //scene.add(light)
 
+let model = null
+
 ldrawLoader.load(marioUrl.href, (grp) => {
 	console.log(grp);
-	//LDrawUtils.mergeObject(grp)
+	LDrawUtils.mergeObject(grp)
 	grp.rotation.x = Math.PI;
-	grp.rotation.y = Math.PI;
-	scene.add(grp);
+	//grp.rotation.y = Math.PI;
+	model = grp
+	
+	scene.add(model);
+
+	const bbox = new THREE.Box3().setFromObject( model );
+	const size = bbox.getSize( new THREE.Vector3() );
+	const radius = Math.max( size.x, Math.max( size.y, size.z ) ) * 0.5;
+
+
+	console.log(model.position);
+	console.log()
+	const c =bbox.getCenter(new THREE.Vector3())
+	// model.position.copy(bbox.getCenter(new THREE.Vector3()))
+	console.log(model.position);
+	controls.target0.copy( bbox.getCenter( new THREE.Vector3() ) );
+	controls.position0.set( - 2.3, 1, 2 ).multiplyScalar( radius ).add( controls.target0 );
+	controls.reset();
+
 }, (xhr) => {
 	console.log(xhr.loaded);
 }, (err) => {
@@ -59,7 +80,7 @@ ldrawLoader.load(marioUrl.href, (grp) => {
 const animate = function () {
 	renderer.render(scene, camera)
 	requestAnimationFrame(animate)
-
+	model.rotation.y += 0.01
 	//camera.position.setZ(camera.position.z + 1)
 
 }
