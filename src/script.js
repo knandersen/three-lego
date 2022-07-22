@@ -1,14 +1,17 @@
 import * as THREE from 'three';
-import {LDrawLoader} from 'three/examples/jsm/loaders/LDrawLoader'
-import {LDrawUtils} from 'three/examples/jsm/utils/LDrawUtils'
-import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
-import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment'
+import { LDrawLoader } from 'three/examples/jsm/loaders/LDrawLoader'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import * as CANNON from 'cannon-es';
 import CannonDebugger from 'cannon-es-debugger';
-import { Object3D, Vector3 } from 'three';
+import Model from './Model';
+import Container from './Container';
 
 const marioUrl = new URL("../assets/mario.mpd", import.meta.url)
+const hubUrl = new URL("../assets/hub3.mpd", import.meta.url)
+const carUrl = new URL("../assets/car.mpd", import.meta.url)
+const motorUrl = new URL("../assets/54696p01c01.mpd", import.meta.url)
 
 const ldrawLoader = new LDrawLoader();
 ldrawLoader.smoothNormals = true;
@@ -52,7 +55,7 @@ controls.update()
 const world = new CANNON.World({
 	gravity: new CANNON.Vec3(0, -9.82, 0), // m/s²
   })
-  const cannonDebugger = new CannonDebugger(scene,world)
+const cannonDebugger = new CannonDebugger(scene,world)
 
 // Create a slippery material (friction coefficient = 0.0)
 physicsMaterial = new CANNON.Material("slipperyMaterial");
@@ -62,60 +65,58 @@ var physicsContactMaterial = new CANNON.ContactMaterial(physicsMaterial,
 // We must add the contact materials to the world
 world.addContactMaterial(physicsContactMaterial);
 
-const groundShape = new CANNON.Plane()
+/* const groundShape = new CANNON.Plane()
+const wallShape = new CANNON.
 const groundBody = new CANNON.Body({
 	type: CANNON.Body.STATIC,
 	shape: groundShape,
   })
   groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0) // make it face up
-  world.addBody(groundBody)
+  world.addBody(groundBody) */
+  
+  const worldSize = 1000;
+  const container = new Container(new THREE.Vector3(worldSize/2,worldSize/2,worldSize/2),world)
 
-const groundGeometry = new THREE.PlaneGeometry(500,500,50,50)
-//groundGeometry.rotateX(-Math.PI/2)
+const groundGeometry = new THREE.PlaneGeometry(worldSize,worldSize,50,50)
 groundGeometry.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI/2))
 const groundMaterial = new THREE.MeshLambertMaterial({color:0xffffff})
 const groundMesh = new THREE.Mesh(groundGeometry,groundMaterial)
 scene.add(groundMesh)
 
-let model = null
-let modelBody = null
-let modelLoaded = false
+// reset camera
+const bbox = new THREE.Box3().setFromCenterAndSize(
+	new THREE.Vector3(0,worldSize/2,0),
+	new THREE.Vector3(worldSize,worldSize,worldSize))
+const bboxHelper = new THREE.Box3Helper(bbox,0x0000ff)
+scene.add(bboxHelper)
+const size = bbox.getSize( new THREE.Vector3() );
+const radius = Math.max( size.x, Math.max( size.y, size.z ) ) * 0.5;
 
-ldrawLoader.load(marioUrl.href, (grp) => {
-	modelLoaded = true
-	LDrawUtils.mergeObject(grp)
-	model = grp
-	const bbox = new THREE.Box3().setFromObject(model)
-		
-	modelBody = new CANNON.Body({mass: 2})
-	
-	for(let part of model.children) {
-		const bbox = new THREE.Box3().setFromObject(part)
-		const box = new CANNON.Box(bbox.getSize(bbox.getCenter(new THREE.Vector3())).multiplyScalar(0.5))
-		modelBody.addShape(
-			box,
-			bbox.getCenter(new Vector3()))
-	}
-	world.addBody(modelBody)
+controls.target0.copy( bbox.getCenter( new THREE.Vector3() ) );
+controls.position0.set( - 2.3, 1, 2 ).multiplyScalar( radius ).add( controls.target0 );
+controls.reset();
 
-	// position model from modelBody and update 
-	modelBody.quaternion.setFromAxisAngle(new Vector3(1,-0.5,0),Math.PI)
-	modelBody.position.y = 400
-	model.position.copy(modelBody.position)
-	model.quaternion.copy(modelBody.quaternion)
-	
-	scene.add(model);
-	
-	// adjust viewport
-	const size = bbox.getSize( new THREE.Vector3() );
-	const radius = Math.max( size.x, Math.max( size.y, size.z ) ) * 0.5;
-	controls.target0.copy( bbox.getCenter( new THREE.Vector3() ) );
-	controls.position0.set( 0.3, 0.4, 2 ).multiplyScalar( radius*3 ).add( controls.target0 );
-	controls.reset();
+// load models
+let models = []
 
-}, (xhr) => {
-	console.log(xhr.loaded);
-})
+const modelOptions = {
+	world: world,
+	scene: scene,
+	loader: ldrawLoader
+}
+
+const mario = new Model(marioUrl.href,modelOptions)
+models.push(mario)
+
+const hub = new Model(hubUrl.href,modelOptions)
+models.push(hub)
+
+const motor = new Model(motorUrl.href,modelOptions)
+models.push(motor)
+
+const car = new Model(carUrl.href,modelOptions)
+models.push(car)
+
 // lets add in an animation loop
 const stepLength = 0.1
 const animate = function () {
@@ -123,11 +124,10 @@ const animate = function () {
 	requestAnimationFrame(animate)
 	
 	stats.update()
-	cannonDebugger.update()
+	//cannonDebugger.update()
 	world.step(stepLength)
-   	if(modelLoaded) {
-		model.position.copy(modelBody.position)
-		model.quaternion.copy(modelBody.quaternion)
+   	for(model of models) {
+		model.update()
 	}
 }
 
