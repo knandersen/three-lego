@@ -25,12 +25,12 @@ gui.add(globalOptions,"stepLength",0.0001,1/30,0.0001)
 
 const obj = {
 	add:function(){
-		for(model of models) {
+		for(let i = 0; i < models.length; i++) {
 			const impulse = new CANNON.Vec3(
 				-Math.random() * 100, 
 				Math.random() * 100, 
 				-Math.random() * 100)
-			model.modelBody.applyImpulse(impulse)
+			models[i].modelBody.applyImpulse(impulse)
 		}
 	}
 }
