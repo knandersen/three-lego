@@ -10,12 +10,15 @@
   },
   "scripts": {
     "start": "parcel",
-    "clean": "rm -rf ./dist",
+    "clean": "rm -rf ./dist ./parcel-cache",
     "build": "parcel build --public-url ./ && cp ./CNAME ./dist/CNAME",
     "push-gh-pages": "push-dir --dir=dist --branch=gh-pages --cleanup --verbose",
-    "deploy": "yarn clean && yarn build && yarn push-gh-pages"
+    "deploy": "yarn clean && yarn build && yarn push-gh-pages",
+    "wbuild": "webpack --config ./bundler/webpack.prod.js",
+    "wdev": "webpack serve --config ./bundler/webpack.dev.js"
   },
   "devDependencies": {
-    "parcel": "latest"
+    "parcel": "latest",
+    "parcel-reporter-static-files-copy": "^1.3.4"
   }
 }
