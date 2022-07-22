@@ -120,6 +120,8 @@ const onModelLoaded = () => {
 		animateEnabled = true
 		animate()
 	}
+	console.log(models)
+	console.log(models[0])
 }
 
 const modelOptions = {
