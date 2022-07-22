@@ -6,6 +6,8 @@
   "license": "MIT",
   "source": "src/index.html",
   "dependencies": {
+    "cannon-es": "^0.19.0",
+    "cannon-es-debugger": "^1.0.0",
     "three": "latest"
   },
   "scripts": {
@@ -16,6 +18,7 @@
     "deploy": "yarn clean && yarn build && yarn push-gh-pages"
   },
   "devDependencies": {
-    "parcel": "latest"
+    "parcel": "latest",
+    "path-browserify": "^1.0.1"
   }
 }
