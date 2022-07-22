@@ -148,9 +148,12 @@ const animate = function () {
 	//cannonDebugger.update()
 	world.step(globalOptions.stepLength)
 
-	for(model of models) {
-		model.update()
+	for(let i = 0; i < models.length; i++) {
+		models[i].update()
 	}
+	// for(model of models) {
+	// 	model.update()
+	// }
 	
 }
 
