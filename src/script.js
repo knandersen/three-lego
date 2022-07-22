@@ -115,7 +115,8 @@ controls.reset();
 // load models
 let animateEnabled = false
 let models = []
-const onModelLoaded = () => {
+const onModelLoaded = (model) => {
+	models.push(model)
 	if(animateEnabled === false) {
 		animateEnabled = true
 		animate()

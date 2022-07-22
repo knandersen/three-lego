@@ -20,8 +20,7 @@ class Model {
 	load(p) {
 		this.loader.load(this.url, (grp) => {
 			this.loaded = true
-            this.callback()
-			LDrawUtils.mergeObject(grp)
+            LDrawUtils.mergeObject(grp)
 			this.model = grp
 			this.modelBody = new Body({mass: 2})
 			
@@ -41,7 +40,7 @@ class Model {
 			this.model.quaternion.copy(this.modelBody.quaternion)
 			
 			this.scene.add(this.model);
-            this.modelsArray.push(this)
+            this.callback(this)
 		}, (xhr) => {
 			console.log(xhr.loaded);
 		})
