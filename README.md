@@ -1,2 +1,3 @@
-# three-base
-Template for doing THREE.js projects
+# THREE.js LEGO
+
+Displaying packed LDraw models (MPD-format)
