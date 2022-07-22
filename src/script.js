@@ -49,26 +49,10 @@ controls.update()
 
 // set up world
 
-const world = new CANNON.World()
-const cannonDebugger = new CannonDebugger(scene,world)
-world.quatNormalizeSkip = 0;
-world.quatNormalizeFast = false;
-
-var solver = new CANNON.GSSolver();
-
-world.defaultContactMaterial.contactEquationStiffness = 1e9;
-world.defaultContactMaterial.contactEquationRelaxation = 4;
-
-solver.iterations = 7;
-solver.tolerance = 0.1;
-var split = true;
-if(split)
-	world.solver = new CANNON.SplitSolver(solver);
-else
-	world.solver = solver;
-
-world.gravity.set(0,-20,0);
-world.broadphase = new CANNON.NaiveBroadphase();
+const world = new CANNON.World({
+	gravity: new CANNON.Vec3(0, -9.82, 0), // m/s²
+  })
+  const cannonDebugger = new CannonDebugger(scene,world)
 
 // Create a slippery material (friction coefficient = 0.0)
 physicsMaterial = new CANNON.Material("slipperyMaterial");
@@ -79,101 +63,72 @@ var physicsContactMaterial = new CANNON.ContactMaterial(physicsMaterial,
 world.addContactMaterial(physicsContactMaterial);
 
 const groundShape = new CANNON.Plane()
-const groundBody = new CANNON.Body({mass: 0})
-groundBody.addShape(groundShape);
-groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2)
-world.addBody(groundBody)
+const groundBody = new CANNON.Body({
+	type: CANNON.Body.STATIC,
+	shape: groundShape,
+  })
+  groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0) // make it face up
+  world.addBody(groundBody)
 
-const groundGeometry = new THREE.PlaneGeometry(300,300,50,50)
-groundGeometry.rotateX(-Math.PI/2)
-// groundGeometry.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI/2))
-const groundMaterial = new THREE.MeshLambertMaterial({color:0xdddddd})
+const groundGeometry = new THREE.PlaneGeometry(500,500,50,50)
+//groundGeometry.rotateX(-Math.PI/2)
+groundGeometry.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI/2))
+const groundMaterial = new THREE.MeshLambertMaterial({color:0xffffff})
 const groundMesh = new THREE.Mesh(groundGeometry,groundMaterial)
 scene.add(groundMesh)
-// lets add some lighting
-const light = new THREE.DirectionalLight(0xffffff, 1)
-light.position.set(0, 0, -1)
-//scene.add(light)
 
 let model = null
 let modelBody = null
 let modelLoaded = false
 
-const getBottom = (m) => {
-	const b = new THREE.Box3().setFromObject( m );
-	const c = b.getCenter(new Vector3())
-	const sz= b.getSize(new Vector3())
-	const v = new Vector3(
-		c.x,
-		c.y - sz.y/2,
-		c.z)
-	return v
-}
-
 ldrawLoader.load(marioUrl.href, (grp) => {
 	modelLoaded = true
 	LDrawUtils.mergeObject(grp)
-	model = new THREE.Group().copy(grp)
-	//model.position.y = 200
+	model = grp
+	const bbox = new THREE.Box3().setFromObject(model)
+		
+	modelBody = new CANNON.Body({mass: 2})
 	
 	for(let part of model.children) {
-		console.log(part);
 		const bbox = new THREE.Box3().setFromObject(part)
-		const bboxHelper = new THREE.Box3Helper(bbox,0xff6600)
-		scene.add(bboxHelper)
+		const box = new CANNON.Box(bbox.getSize(bbox.getCenter(new THREE.Vector3())).multiplyScalar(0.5))
+		modelBody.addShape(
+			box,
+			bbox.getCenter(new Vector3()))
 	}
-
-	const bbox = new THREE.Box3().setFromObject( model );
-	const bboxHelper = new THREE.Box3Helper(bbox,0xffff00);
-	scene.add(bboxHelper)
- 	const box = new CANNON.Box(bbox.getSize(new Vector3()).multiplyScalar(0.5))
-	modelBody = new CANNON.Body({
-		mass: 2, // kg
-		shape: box,
-		position: bbox.getCenter(new Vector3()),
-		//position: model.position,
-		//quaternion: model.quaternion
-	})
 	world.addBody(modelBody)
 
-	//model.position.copy(modelBody.position)
-	//model.quaternion.copy(modelBody.quaternion)
-	//model.position.y = -200
-	//model.rotateX(Math.PI/2)
-	//model.rotateY(Math.PI/2)
-	scene.add(model);
-	const n = getBottom(model)
-	//model.position.set(n.x,-n.y,n.z)
+	// position model from modelBody and update 
+	modelBody.quaternion.setFromAxisAngle(new Vector3(1,-0.5,0),Math.PI)
+	modelBody.position.y = 400
+	model.position.copy(modelBody.position)
+	model.quaternion.copy(modelBody.quaternion)
 	
+	scene.add(model);
+	
+	// adjust viewport
 	const size = bbox.getSize( new THREE.Vector3() );
 	const radius = Math.max( size.x, Math.max( size.y, size.z ) ) * 0.5;
-	
-	const bboxCenter = bbox.getSize(bbox.getCenter(new THREE.Vector3()))
-
-	
 	controls.target0.copy( bbox.getCenter( new THREE.Vector3() ) );
 	controls.position0.set( 0.3, 0.4, 2 ).multiplyScalar( radius*3 ).add( controls.target0 );
 	controls.reset();
 
 }, (xhr) => {
 	console.log(xhr.loaded);
-}, (err) => {
-	console.log(err);
 })
 // lets add in an animation loop
 const stepLength = 0.1
 const animate = function () {
 	renderer.render(scene, camera)
 	requestAnimationFrame(animate)
-	//camera.position.setZ(camera.position.z + 1)
+	
 	stats.update()
 	cannonDebugger.update()
-	//world.step(stepLength)
-/*   	if(modelLoaded) {
-		//model.rotation.y += 0.01
+	world.step(stepLength)
+   	if(modelLoaded) {
 		model.position.copy(modelBody.position)
 		model.quaternion.copy(modelBody.quaternion)
-	} */
+	}
 }
 
 // start the animation
